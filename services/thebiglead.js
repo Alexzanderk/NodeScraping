@@ -8,14 +8,14 @@ let browser = null;
 let page = null;
 
 module.exports = {
-  async init({ image = true } = {}) {
+  async init({ openBrowser = true, images = true, devtools = false } = {}) {
     browser = await puppeteer.launch({
-      headless: false
-      // handleSIGINT: false
-      // devtools: true
+      headless: openBrowser,
+      devtools
     });
     page = await browser.newPage();
-    if (!image) {
+
+    if (!images) {
       await page.setRequestInterception(true);
 
       page.on('request', request => {
@@ -28,20 +28,10 @@ module.exports = {
     }
 
     await page.goto(BASE_URL);
+    
   },
 
-  async scroll({ count, duration = 3000 } = {}) {
-    let num = 0;
-
-    while (num < count) {
-      num += 1;
-
-      await page.evaluate(`window.scrollTo(0, document.body.scrollHeight)`);
-      await page.waitFor(duration);
-    }
-  },
-
-  async getArticlesLinks({ count = 5 } = {}) {
+  async getArticlesLinks({ count = 10 } = {}) {
     let articlesArray = await page.$$('article');
     let articlesLinks = [];
     let lastArticlesArrayLength = 0;
@@ -66,6 +56,7 @@ module.exports = {
       }
 
       articlesLinks = articlesLinks.slice(0, count);
+
       const uniqArticlesLinks = [...new Set(articlesLinks)];
 
       return uniqArticlesLinks;
@@ -187,10 +178,16 @@ module.exports = {
     return;
   },
 
-  saveDataJSON(data) {
+  async saveDataJSON(data) {
     try {
-      fs.writeFileSync('./out/data.json', JSON.stringify(data), 'utf-8');
-      console.log('File data.json saved.');
+      await fs.writeFile(
+        './out/data.json',
+        JSON.stringify(data),
+        'utf-8',
+        () => {
+          console.log('File data.json saved.');
+        }
+      );
     } catch (error) {
       console.error(`Some problem with save, look error: ${error}`);
     }
