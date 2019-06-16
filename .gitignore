@@ -1,3 +1,6 @@
+#OUTPUT
+./out
+out
 #VSCode
 ./workSpace.code-workspace
 workSpace.code-workspace
