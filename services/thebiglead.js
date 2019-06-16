@@ -3,12 +3,18 @@ const fs = require('fs');
 const path = require('path');
 
 const BASE_URL = 'https://thebiglead.com/';
+let DATE_URL = null;
 
 let browser = null;
 let page = null;
 
 module.exports = {
-  async init({ openBrowser = true, images = true, devtools = false } = {}) {
+  async init({
+    openBrowser = true,
+    images = true,
+    devtools = false,
+    filterByDate = false
+  } = {}) {
     browser = await puppeteer.launch({
       headless: openBrowser,
       devtools
@@ -27,8 +33,10 @@ module.exports = {
       });
     }
 
-    await page.goto(BASE_URL);
-    
+    if (!filterByDate) {
+      return await page.goto(BASE_URL);
+    }
+    await page.goto(DATE_URL);
   },
 
   async getArticlesLinks({ count = 10 } = {}) {
@@ -109,8 +117,8 @@ module.exports = {
               .split('?')[0]
         }));
 
-        const ext = path.extname(data.imgLink);
-        const imageName = path.basename(data.imgLink, ext);
+        const ext = typeof data.imgLink === 'string' && path.extname(data.imgLink);
+        const imageName = typeof data.imgLink === 'string' && path.basename(data.imgLink, ext);
 
         data.imgName = imageName;
 
@@ -131,7 +139,7 @@ module.exports = {
     return imagesLinks;
   },
 
-  async downloadImages(images, { dublicate = false } = {}) {
+  async downloadImages(images, { duplicate = false } = {}) {
     let count = 0;
     let dublicateCount = 0;
     let imagesNames = [];
@@ -145,11 +153,11 @@ module.exports = {
 
         let img = await page.goto(image.url, { waitUntil: 'domcontentloaded' });
 
-        if (!dublicate && imagesNames.includes(fileName)) {
+        if (!duplicate && imagesNames.includes(fileName)) {
           dublicateCount += 1;
         }
 
-        if (dublicate && imagesNames.includes(fileName)) {
+        if (duplicate && imagesNames.includes(fileName)) {
           dublicateCount += 1;
           fileName = `${image.name}_${count}`;
         }
@@ -171,7 +179,7 @@ module.exports = {
     console.log(`Saved: ${count} file${count > 1 ? 's' : ''}`);
     console.log(
       `Dublicated names:  ${dublicateCount} ${
-        !dublicate ? 'find' : 'was saved'
+        !duplicate ? 'find' : 'was saved'
       } `
     );
 
@@ -191,6 +199,10 @@ module.exports = {
     } catch (error) {
       console.error(`Some problem with save, look error: ${error}`);
     }
+  },
+
+  async setPageURL(url) {
+    return DATE_URL = BASE_URL + url;
   },
 
   async end() {

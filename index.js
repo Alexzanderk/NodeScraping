@@ -1,10 +1,21 @@
 const bigLead = require('./services/thebiglead');
 const { questionaries, getOtions, rl } = require('./services/questionaris');
 
-const parserConstructor = ({ openBrowser, images, download, count, dublicate }) => {
-  return (async () => {
+const parserConstructor = ({
+  openBrowser,
+  images,
+  download,
+  count,
+  duplicate,
+  date,
+  filterByDate
+}) => {
+  return async () => {
     try {
-      await bigLead.init({ openBrowser, images });
+      if (filterByDate) {
+        await bigLead.setPageURL(date);
+      }
+      await bigLead.init({ openBrowser, images, filterByDate });
 
       let articlesLinks = await bigLead.getArticlesLinks({ count });
 
@@ -13,29 +24,28 @@ const parserConstructor = ({ openBrowser, images, download, count, dublicate }) 
       });
 
       let imgs = await bigLead.getImagesLinksAndName(articles);
-      
+
       bigLead.saveDataJSON(articles);
-      
+
       if (download) {
-        await bigLead.downloadImages(imgs, { dublicate });
+        await bigLead.downloadImages(imgs, { duplicate });
       }
       await bigLead.end();
-      
-
     } catch (error) {
       // await bigLead.end();
       console.error(error);
     }
-  })();
+  };
 };
 
 questionaries().on('close', async () => {
   console.log('START CODE');
   const options = getOtions();
-  await parserConstructor(options);
-  
-  console.log('DONE')
+  const parser = await parserConstructor(options);
+
+  await parser();
+
+  console.log('DONE');
   rl.close();
   process.exit(0);
-
 });

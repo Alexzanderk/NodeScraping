@@ -6,16 +6,16 @@ const rl = readLine.createInterface({
   prompt: '>> '
 });
 
-let openBrowser, images, download, count, dublicate;
+let openBrowser, images, download, count, duplicate, filterByDate, date;
 let index = 0;
 
 const questions = [
   'Open browser? (y/n) ',
   'Load images in browser? (y/n) ',
   'Count articles you need to scrape, default 10?  ',
-  'Download images? (y/n) ',
-  'If dublicate images, download renamed copy? (y/n) '
-  // 'Filters'
+  'Would you like to download images? (y/n) ',
+  'Would you like to create duplicate images on different articles? (y/n) ',
+  `Would you like to scrape by date? ('y/n)`
 ];
 
 const setQuestions = (subLine = '') => {
@@ -95,11 +95,12 @@ const checkAnswers = answer => {
 
     case 4:
       index += 1;
+
       if (valid) {
         if (valid.includes('y')) {
-          dublicate = true;
+          duplicate = true;
         } else {
-          dublicate = false;
+          duplicate = false;
         }
         setQuestions();
       } else {
@@ -108,7 +109,38 @@ const checkAnswers = answer => {
       }
       break;
 
+    case 5:
+      index += 1;
+
+      if (valid) {
+        if (valid.includes('y')) {
+          filterByDate = true;
+          questions.push('Write date like pattern "YYYY/MM/DD"');
+        } else {
+          filterByDate = false;
+        }
+        setQuestions();
+      } else {
+        index -= 1;
+        setQuestions('Please write "y" or "n"!');
+      }
+      break;
+
+    case 6:
+      index += 1;
+
+      const regexDate = /^\d{4}\/\d{2}\/\d{2}$/g
+      if (regexDate.test(answer)) {
+        date = answer;
+        setQuestions();
+      } else {
+        index -= 1;
+        setQuestions('Please correct date YYYY/MM/DD ');
+      }
+      break;
+
     default:
+      setQuestions();
       break;
   }
 };
@@ -126,6 +158,8 @@ const getOtions = () => ({
   images,
   download,
   count,
-  dublicate
+  duplicate,
+  date,
+  filterByDate
 });
 module.exports = { questionaries, getOtions, rl };
