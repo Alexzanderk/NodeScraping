@@ -1,5 +1,5 @@
 const bigLead = require('./services/thebiglead');
-const { questionaries, getOtions, rl } = require('./services/questionaris');
+const { questionnaire, getOtions, rl } = require('./services/questionnaire');
 
 const parserConstructor = ({
   openBrowser,
@@ -38,7 +38,7 @@ const parserConstructor = ({
   };
 };
 
-questionaries().on('close', async () => {
+questionnaire().on('close', async () => {
   console.log('START CODE');
   const options = getOtions();
   const parser = await parserConstructor(options);

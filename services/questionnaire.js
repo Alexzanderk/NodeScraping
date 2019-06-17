@@ -145,7 +145,7 @@ const checkAnswers = answer => {
   }
 };
 
-const questionaries = () => {
+const questionnaire = () => {
   setQuestions();
 
   return rl.on('line', line => {
@@ -162,4 +162,4 @@ const getOtions = () => ({
   date,
   filterByDate
 });
-module.exports = { questionaries, getOtions, rl };
+module.exports = { questionnaire, getOtions, rl };
