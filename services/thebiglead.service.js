@@ -8,11 +8,10 @@ let browser = null;
 let page = null;
 
 module.exports = {
-  async init({ image = true } = {}) {
+  async init({ openBrowser = true, image = false } = {}) {
     browser = await puppeteer.launch({
-      headless: false
-      // handleSIGINT: false
-      // devtools: true
+      headless: openBrowser,
+      devtools: false
     });
     page = await browser.newPage();
     if (!image) {
@@ -27,18 +26,7 @@ module.exports = {
       });
     }
 
-    await page.goto(BASE_URL);
-  },
-
-  async scroll({ count, duration = 3000 } = {}) {
-    let num = 0;
-
-    while (num < count) {
-      num += 1;
-
-      await page.evaluate(`window.scrollTo(0, document.body.scrollHeight)`);
-      await page.waitFor(duration);
-    }
+    await page.goto(BASE_URL, { timeout: 180000 });
   },
 
   async getArticlesLinks({ count = 5 } = {}) {
@@ -70,7 +58,7 @@ module.exports = {
 
       return uniqArticlesLinks;
     } catch (error) {
-      console.error(error);
+      console.error('Error in getArticlesLinks', error);
     }
   },
 
@@ -84,6 +72,7 @@ module.exports = {
     try {
       for (const url of links) {
         await page.goto(url, { waitUntil: 'domcontentloaded' });
+        // await page.waitFor(2000);
 
         let data = await page.evaluate(() => ({
           articleLink: window.location.href,
@@ -118,8 +107,8 @@ module.exports = {
               .split('?')[0]
         }));
 
-        const ext = path.extname(data.imgLink);
-        const imageName = path.basename(data.imgLink, ext);
+        const ext = data.imgLink && path.extname(data.imgLink);
+        const imageName = data.imgLink && path.basename(data.imgLink, ext);
 
         data.imgName = imageName;
 
@@ -128,7 +117,7 @@ module.exports = {
 
       return articlesDataArray;
     } catch (error) {
-      console.log(error);
+      console.log('Error in getArticlesDataByLink', error);
     }
   },
 

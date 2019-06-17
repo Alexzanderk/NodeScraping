@@ -1,25 +1,19 @@
-const bigLead = require('./services/thebiglead');
+const express = require('express');
+const api = require('./api');
+const config = require('./config');
+const { connection } = require('./services/db.service');
 
-(async () => {
-  try {
-    await bigLead.init({ image: false });
+const server = express();
 
-    let articlesLinks = await bigLead.getArticlesLinks({ count: 10 });
+server.use(express.urlencoded({ extended: false }));
+server.use(express.json());
 
-    let articles = await bigLead.getArticlesDataByLink({
-      links: articlesLinks
-    });
+server.use('/api/', api);
 
-    let imgs = await bigLead.getImagesLinksAndName(articles);
+server.get('/', (req, res) => {
+  res.json({ ok: true });
+});
 
-    bigLead.saveDataJSON(articles);
-
-    await bigLead.downloadImages(imgs)
-
-    await bigLead.end();
-
-  } catch (error) {
-    await bigLead.end();
-    console.error(error);
-  }
-})();
+server.listen(config.port, () => {
+  console.log(`Server run on port: ${config.port}`);
+});
