@@ -7,6 +7,7 @@ let DATE_URL = null;
 
 let browser = null;
 let page = null;
+let body = []
 
 module.exports = {
   async init({
@@ -20,6 +21,11 @@ module.exports = {
       devtools
     });
     page = await browser.newPage();
+
+    await page._client.send('Network.enable', {
+      maxResourceBufferSize: 1024 * 1204 * 100,
+      maxTotalBufferSize: 1024 * 1204 * 200
+    })
 
     if (!images) {
       await page.setRequestInterception(true);
@@ -117,8 +123,10 @@ module.exports = {
               .split('?')[0]
         }));
 
-        const ext = typeof data.imgLink === 'string' && path.extname(data.imgLink);
-        const imageName = typeof data.imgLink === 'string' && path.basename(data.imgLink, ext);
+        const ext =
+          typeof data.imgLink === 'string' && path.extname(data.imgLink);
+        const imageName =
+          typeof data.imgLink === 'string' && path.basename(data.imgLink, ext);
 
         data.imgName = imageName;
 
@@ -143,15 +151,22 @@ module.exports = {
     let count = 0;
     let dublicateCount = 0;
     let imagesNames = [];
+    let restarted = false;
 
     for (const image of images) {
+      if (!restarted) {
+        await page.reload();
+        restarted = true;
+      }
       if (image.url !== null) {
         count += 1;
 
         const exec = image.url.match(/.(jpg|png|JPEG|gif)$/)[0];
         let fileName = image.name;
 
-        let img = await page.goto(image.url, { waitUntil: 'domcontentloaded' });
+        let img = await page.goto(image.url, {
+          waitUntil: 'domcontentloaded'
+        });
 
         if (!duplicate && imagesNames.includes(fileName)) {
           dublicateCount += 1;
@@ -176,10 +191,11 @@ module.exports = {
         );
       }
     }
+
     console.log(`Saved: ${count} file${count > 1 ? 's' : ''}`);
     console.log(
       `Dublicated names:  ${dublicateCount} ${
-        !duplicate ? 'find' : 'was saved'
+      !duplicate ? 'find' : 'was saved'
       } `
     );
 
@@ -193,7 +209,7 @@ module.exports = {
         JSON.stringify(data),
         'utf-8',
         () => {
-          console.log('File data.json saved.');
+          console.log('F e  data.json save d.');
         }
       );
     } catch (error) {
@@ -202,7 +218,7 @@ module.exports = {
   },
 
   async setPageURL(url) {
-    return DATE_URL = BASE_URL + url;
+    return (DATE_URL = BASE_URL + url);
   },
 
   async end() {
