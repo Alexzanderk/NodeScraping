@@ -7,7 +7,7 @@ let DATE_URL = null;
 
 let browser = null;
 let page = null;
-let body = []
+
 
 module.exports = {
   async init({
@@ -80,6 +80,7 @@ module.exports = {
   },
 
   async getArticlesDataByLink({ links = [] } = {}) {
+    let htmlArticlesDataArray = []
     let articlesDataArray = [];
 
     if (!links.length) {
@@ -88,7 +89,103 @@ module.exports = {
 
     try {
       for (const url of links) {
+        let body = [];
+
         await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+        const inlineTextObj = html => ({
+          type: 'inline-text',
+          value: { html }
+        })
+
+        const imageObj = image => ({
+          type: 'image',
+          value: image
+        })
+
+        const { titleHtml, contentHtml, authorObj, publishedObj, image } = await page.evaluate(() => {
+          // let body = [];
+
+          const titleHtml = document.querySelector('h1.article__headline') &&
+            document.querySelector('h1.article__headline').innerHTML;
+
+          const contentHtml = document.querySelector('div.articleBody') &&
+            document.querySelector('div.articleBody').innerHTML;
+
+          const authorObj = {
+            fullName: document.querySelector(
+              'div.article__author > p > span[itemprop="author"]'
+            ) &&
+              document.querySelector(
+                'div.article__author > p > span[itemprop="author"]'
+              ).innerHTML,
+            link: document.querySelector(
+              'div.article__author > p > span[itemprop="author"] > span > a'
+            ) &&
+              document
+                .querySelector(
+                  'div.article__author > p > span[itemprop="author"] > span > a'
+                )
+                .getAttribute('href'),
+          }
+
+          const publishedObj = {
+
+            date: window.location.href.match(/\d{4}\/\d{2}\/\d{2}/)[0],
+            html: `<span>${window.location.href.match(/\d{4}\/\d{2}\/\d{2}/)[0]}</span>`
+          };
+
+          const imgLink = document.querySelector('div.article__title > span > img') &&
+            document
+              .querySelector('div.article__title > span > img')
+              .getAttribute('src')
+              .split('?')[0];
+
+
+
+          // const ext = path.extname(imgLink);
+          // const baseName = path.basename(imgLink, ext);
+
+          // console.log({
+          //   ext, baseName, imgLink
+          // })
+          const image = {
+            // name: baseName,
+            link: imgLink,
+            description: document.querySelector('div.article__title > span > img') &&
+              document
+                .querySelector('div.article__title > span > img')
+                .getAttribute('data-image-title'),
+            // fileExtension: ext,
+            // pathToImage: `./img/${baseName + ext}`,
+            rawImageUrl: document.querySelector('div.article__title > span > img') &&
+              document
+                .querySelector('div.article__title > span > img')
+                .getAttribute('src')
+          }
+
+
+          return {
+            titleHtml,
+            contentHtml,
+            authorObj,
+            publishedObj,
+            image
+          }
+
+        });
+
+        const ext = typeof image.link === 'string' && path.extname(image.link);
+        const baseName = typeof image.link === 'string' && path.basename(image.link, ext);
+        image.name = baseName;
+        image.fileExtension = ext;
+        image.pathToImage = `./img/${baseName + ext}`;
+        
+        body.push(inlineTextObj(titleHtml))
+        body.push(inlineTextObj(contentHtml))
+        body.push(inlineTextObj(authorObj.fullName))
+        body.push(inlineTextObj(publishedObj.html))
+        body.push(imageObj(image))
 
         let data = await page.evaluate(() => ({
           articleLink: window.location.href,
@@ -123,19 +220,20 @@ module.exports = {
               .split('?')[0]
         }));
 
-        const ext =
-          typeof data.imgLink === 'string' && path.extname(data.imgLink);
+        // const ext =
+        //   typeof data.imgLink === 'string' && path.extname(data.imgLink);
         const imageName =
           typeof data.imgLink === 'string' && path.basename(data.imgLink, ext);
 
         data.imgName = imageName;
 
         articlesDataArray.push(data);
+        htmlArticlesDataArray.push({ body });
       }
 
-      return articlesDataArray;
+      return { articlesDataArray, htmlArticlesDataArray };
     } catch (error) {
-      console.log(error);
+      console.log('HERE  getArticlesDataByLink', error);
     }
   },
 
@@ -161,7 +259,7 @@ module.exports = {
       if (image.url !== null) {
         count += 1;
 
-        const exec = image.url.match(/.(jpg|png|JPEG|gif)$/)[0];
+        const ext = image.url.match(/.(jpg|png|JPEG|gif)$/)[0];
         let fileName = image.name;
 
         let img = await page.goto(image.url, {
@@ -180,7 +278,7 @@ module.exports = {
         imagesNames.push(image.name);
 
         await fs.writeFile(
-          `./out/img/${fileName + exec}`,
+          `./out/img/${fileName + ext}`,
           await img.buffer(),
           err => {
             if (err) {
@@ -202,14 +300,14 @@ module.exports = {
     return;
   },
 
-  async saveDataJSON(data) {
+  async saveDataJSON(data, fileName) {
     try {
       await fs.writeFile(
-        './out/data.json',
+        `./out/${fileName}.json`,
         JSON.stringify(data),
         'utf-8',
         () => {
-          console.log('F e  data.json save d.');
+          console.log(`File ${fileName} saved!`);
         }
       );
     } catch (error) {

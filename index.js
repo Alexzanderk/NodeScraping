@@ -19,13 +19,14 @@ const parserConstructor = ({
 
       let articlesLinks = await bigLead.getArticlesLinks({ count });
 
-      let articles = await bigLead.getArticlesDataByLink({
+      let { articlesDataArray, htmlArticlesDataArray } = await bigLead.getArticlesDataByLink({
         links: articlesLinks
       });
 
-      let imgs = await bigLead.getImagesLinksAndName(articles);
+      let imgs = await bigLead.getImagesLinksAndName(articlesDataArray);
 
-      bigLead.saveDataJSON(articles);
+      bigLead.saveDataJSON(articlesDataArray, 'dataContent');
+      bigLead.saveDataJSON(htmlArticlesDataArray, 'dataHTML');
 
       if (download) {
         await bigLead.downloadImages(imgs, { duplicate });
