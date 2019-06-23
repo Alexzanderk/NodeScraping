@@ -224,7 +224,7 @@ module.exports = {
 
       return { articlesDataArray, htmlArticlesDataArray };
     } catch (error) {
-      console.log('HERE  getArticlesDataByLink', error);
+      console.log(error);
     }
   },
 
@@ -272,8 +272,6 @@ module.exports = {
             });
 
         }).catch(error => console.log(`${filename} has an error on download. ${error}`))
-
-
       }
     }
 
