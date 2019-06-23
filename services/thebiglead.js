@@ -10,12 +10,7 @@ let page = null;
 
 
 module.exports = {
-  async init({
-    openBrowser = true,
-    images = true,
-    devtools = false,
-    filterByDate = false
-  } = {}) {
+  async init({ openBrowser = false, images = true, devtools = false, url = BASE_URL }) {
     browser = await puppeteer.launch({
       headless: openBrowser,
       devtools
@@ -38,14 +33,11 @@ module.exports = {
         }
       });
     }
-
-    if (!filterByDate) {
-      return await page.goto(BASE_URL);
-    }
-    await page.goto(DATE_URL);
+    await page.goto(url);
   },
 
-  async getArticlesLinks({ count = 10 } = {}) {
+  async getArticlesLinks({ count = 10 }) {
+    console.log(count)
     let articlesArray = await page.$$('article');
     let articlesLinks = [];
     let lastArticlesArrayLength = 0;
@@ -79,7 +71,7 @@ module.exports = {
     }
   },
 
-  async getArticlesDataByLink({ links = [] } = {}) {
+  async getArticlesDataByLink({ links }) {
     let htmlArticlesDataArray = []
     let articlesDataArray = [];
 
@@ -180,7 +172,7 @@ module.exports = {
         image.name = baseName;
         image.fileExtension = ext;
         image.pathToImage = `./img/${baseName + ext}`;
-        
+
         body.push(inlineTextObj(titleHtml))
         body.push(inlineTextObj(contentHtml))
         body.push(inlineTextObj(authorObj.fullName))
@@ -313,10 +305,6 @@ module.exports = {
     } catch (error) {
       console.error(`Some problem with save, look error: ${error}`);
     }
-  },
-
-  async setPageURL(url) {
-    return (DATE_URL = BASE_URL + url);
   },
 
   async end() {
