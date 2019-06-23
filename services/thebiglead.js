@@ -1,16 +1,16 @@
-const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
+const puppeteer = require('puppeteer');
+const request = require('request');
 
 const BASE_URL = 'https://thebiglead.com/';
-let DATE_URL = null;
 
 let browser = null;
 let page = null;
 
 
 module.exports = {
-  async init({ openBrowser = false, images = true, devtools = false, url = BASE_URL }) {
+  async init({ openBrowser = true, images = true, devtools = false, url = BASE_URL }) {
     browser = await puppeteer.launch({
       headless: openBrowser,
       devtools
@@ -37,7 +37,6 @@ module.exports = {
   },
 
   async getArticlesLinks({ count = 10 }) {
-    console.log(count)
     let articlesArray = await page.$$('article');
     let articlesLinks = [];
     let lastArticlesArrayLength = 0;
@@ -241,44 +240,40 @@ module.exports = {
     let count = 0;
     let dublicateCount = 0;
     let imagesNames = [];
-    let restarted = false;
 
     for (const image of images) {
-      if (!restarted) {
-        await page.reload();
-        restarted = true;
-      }
       if (image.url !== null) {
         count += 1;
 
         const ext = image.url.match(/.(jpg|png|JPEG|gif)$/)[0];
-        let fileName = image.name;
+        let filename = image.name;
 
-        let img = await page.goto(image.url, {
-          waitUntil: 'domcontentloaded'
-        });
-
-        if (!duplicate && imagesNames.includes(fileName)) {
+        if (!duplicate && imagesNames.includes(filename)) {
           dublicateCount += 1;
         }
 
-        if (duplicate && imagesNames.includes(fileName)) {
+        if (duplicate && imagesNames.includes(filename)) {
           dublicateCount += 1;
-          fileName = `${image.name}_${count}`;
+          filename = `${image.name}_${count}`;
         }
 
         imagesNames.push(image.name);
 
-        await fs.writeFile(
-          `./out/img/${fileName + ext}`,
-          await img.buffer(),
-          err => {
-            if (err) {
-              console.error(err);
-            }
-            console.log(`File ${image.name}.jpg saved`);
-          }
-        );
+        let file = fs.createWriteStream(`./out/img/${filename + ext}`)
+
+        await new Promise((resolve, reject) => {
+          request(image.url)
+            .pipe(file)
+            .on('finish', () => {
+              console.log(`${filename} saved`)
+              resolve();
+            }).on('error', () => {
+              reject(error)
+            });
+
+        }).catch(error => console.log(`${filename} has an error on download. ${error}`))
+
+
       }
     }
 

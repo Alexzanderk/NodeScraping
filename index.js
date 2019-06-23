@@ -18,6 +18,8 @@ const bigLead = require('./services/thebiglead');
   const { articlesDataArray, htmlArticlesDataArray } = await bigLead.getArticlesDataByLink({
     links: articlesLinks
   });
+  await bigLead.end();
+  
   await bigLead.saveDataJSON(articlesDataArray, 'dataContent');
   await bigLead.saveDataJSON(htmlArticlesDataArray, 'dataHTML');
 
@@ -26,5 +28,4 @@ const bigLead = require('./services/thebiglead');
     await bigLead.downloadImages(imgs);
   }
 
-  await bigLead.end();
 })();
