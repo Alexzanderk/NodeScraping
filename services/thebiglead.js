@@ -2,6 +2,15 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const request = require('request');
+const cloudinary = require('cloudinary').v2;
+
+require('dotenv').config()
+
+cloudinary.config({
+  cloud_name: 'alexzanderk',
+  api_key: '348193175719274',
+  api_secret: '-8kgU5HePASfzRDe5_UpCCG1ITw'
+})
 
 const BASE_URL = 'https://thebiglead.com/';
 
@@ -10,7 +19,7 @@ let page = null;
 
 
 module.exports = {
-  async init({ openBrowser = true, images = true, devtools = false, url = BASE_URL }) {
+  async init({ openBrowser = true, images = false, devtools = false, url = BASE_URL }) {
     browser = await puppeteer.launch({
       headless: openBrowser,
       devtools
@@ -62,9 +71,7 @@ module.exports = {
 
       articlesLinks = articlesLinks.slice(0, count);
 
-      const uniqArticlesLinks = [...new Set(articlesLinks)];
-
-      return uniqArticlesLinks;
+      return articlesLinks;
     } catch (error) {
       console.error(error);
     }
@@ -236,17 +243,18 @@ module.exports = {
     return imagesLinks;
   },
 
-  async downloadImages(images, { duplicate = false } = {}) {
+  async downloadImages(articlesDataArray, { duplicate = false } = {}) {
     let count = 0;
     let dublicateCount = 0;
     let imagesNames = [];
+    let articlesWithCloudLink = []
 
-    for (const image of images) {
-      if (image.url !== null) {
+    for (const article of articlesDataArray) {
+      if (article.imgLink !== null) {
         count += 1;
 
-        const ext = image.url.match(/.(jpg|png|JPEG|gif)$/)[0];
-        let filename = image.name;
+        const ext = article.imgLink.match(/.(jpg|png|JPEG|gif)$/)[0];
+        let filename = article.imgName;
 
         if (!duplicate && imagesNames.includes(filename)) {
           dublicateCount += 1;
@@ -257,23 +265,36 @@ module.exports = {
           filename = `${image.name}_${count}`;
         }
 
-        imagesNames.push(image.name);
+        imagesNames.push(article.imgName);
 
-        let file = fs.createWriteStream(`./out/img/${filename + ext}`)
+        let file = fs.createWriteStream(`./out/img/${filename + ext}`);
+        const upload_stream = cloudinary.uploader.upload_stream({ public_id: filename }, (err, image) => {
+          if (err) { console.log(err) }
+          // console.log(image)
+          articlesWithCloudLink.push({ ...article, cloud: image.url })
+          // console.log({ articlesWithCloudLink })
+        })
+
+
 
         await new Promise((resolve, reject) => {
-          request(image.url)
+          request(article.imgLink)
+            .pipe(upload_stream)
             .pipe(file)
             .on('finish', () => {
               console.log(`${filename} saved`)
               resolve();
-            }).on('error', () => {
+            }).on('error', (error) => {
               reject(error)
             });
 
-        }).catch(error => console.log(`${filename} has an error on download. ${error}`))
+        }).catch(error => console.log(`${filename} has an error on download. ${error}`));
+
       }
+
     }
+
+    console.log({ articlesWithCloudLink })
 
     console.log(`Saved: ${count} file${count > 1 ? 's' : ''}`);
     console.log(

@@ -19,13 +19,14 @@ const bigLead = require('./services/thebiglead');
     links: articlesLinks
   });
   await bigLead.end();
-  
-  await bigLead.saveDataJSON(articlesDataArray, 'dataContent');
-  await bigLead.saveDataJSON(htmlArticlesDataArray, 'dataHTML');
+
 
   if (downloadImages) {
     let imgs = await bigLead.getImagesLinksAndName(articlesDataArray);
-    await bigLead.downloadImages(imgs);
-  }
+    await bigLead.downloadImages(articlesDataArray);
+  } 
+  
+  await bigLead.saveDataJSON(articlesDataArray, 'dataContent');
+  await bigLead.saveDataJSON(htmlArticlesDataArray, 'dataHTML');
 
 })();
