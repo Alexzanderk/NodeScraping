@@ -1,15 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
 const request = require('request');
 const cloudinary = require('cloudinary').v2;
 
 require('dotenv').config()
 
 cloudinary.config({
-  cloud_name: 'alexzanderk',
-  api_key: '348193175719274',
-  api_secret: '-8kgU5HePASfzRDe5_UpCCG1ITw'
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET
 })
 
 const BASE_URL = 'https://thebiglead.com/';
@@ -270,7 +271,7 @@ module.exports = {
         let file = fs.createWriteStream(`./out/img/${filename + ext}`);
         const upload_stream = cloudinary.uploader.upload_stream({ public_id: filename }, (err, image) => {
           if (err) { console.log(err) }
-          // console.log(image)
+          console.log(image)
           articlesWithCloudLink.push({ ...article, cloud: image.url })
           // console.log({ articlesWithCloudLink })
         })
@@ -294,7 +295,7 @@ module.exports = {
 
     }
 
-    console.log({ articlesWithCloudLink })
+    // console.log({ articlesWithCloudLink })
 
     console.log(`Saved: ${count} file${count > 1 ? 's' : ''}`);
     console.log(

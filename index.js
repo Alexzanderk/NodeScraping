@@ -1,4 +1,4 @@
-const bigLead = require('./services/thebiglead');
+const bigLead = require('./services/thebiglead.puppeteer');
 
 (async () => {
   const getArgvValue = flag => {
