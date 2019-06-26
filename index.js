@@ -1,32 +1,20 @@
-const bigLead = require('./services/thebiglead.puppeteer');
+const parser = require('./services/thebiglead.cheerio');
+const converter = require('./services/embedToJsonConverter');
+
+// const types = require('./services/embedToJsonConverter/types');
+
+const URL =
+  'https://thebiglead.com/2019/06/14/best-father-child-athlete-combinations-of-all-time/';
 
 (async () => {
-  const getArgvValue = flag => {
-    const index = process.argv.indexOf(flag);
-    const value = process.argv[index + 1]
-    return index < 0 ? undefined
-      : value ? value
-        : true;
+  try {
+    const links = await parser.getPaginationLinks(URL);
+    const data = await parser.parseUrl(links);
+    const convertedData = converter.convertToJson(data);
+
+    debugger;
+
+  } catch (error) {
+    console.error(error);
   }
-
-  const url = getArgvValue('-u');
-  const count = getArgvValue('-c');
-  const downloadImages = getArgvValue('-d');
-
-  await bigLead.init({ url })
-  const articlesLinks = await bigLead.getArticlesLinks({ count });
-  const { articlesDataArray, htmlArticlesDataArray } = await bigLead.getArticlesDataByLink({
-    links: articlesLinks
-  });
-  await bigLead.end();
-
-
-  if (downloadImages) {
-    let imgs = await bigLead.getImagesLinksAndName(articlesDataArray);
-    await bigLead.downloadImages(articlesDataArray);
-  } 
-  
-  await bigLead.saveDataJSON(articlesDataArray, 'dataContent');
-  await bigLead.saveDataJSON(htmlArticlesDataArray, 'dataHTML');
-
 })();

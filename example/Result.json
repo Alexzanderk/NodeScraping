@@ -1,0 +1,24 @@
+{
+	DraftId: <empty>
+	CreatedAt: <data> (format 2019-06-01 16:08:51),
+	UpdatedAt: <data> (format 2019-06-01 16:08:51), 
+	Title: string
+	Revision: 1
+	Body: <json> (see file Body.txt)
+	Cover: <json> (see file Cover.txt)
+	Tags: <json array> (see file Tags.txt)
+	Seo: string
+	Analysis: <empty>
+	Hash: <empty>
+	Site: <string> thebiglead,
+	Locale: <string> en,
+	Author: {
+		UserId: <empty>,
+		Username: <string>,
+		Name: <string>,
+	},
+	Additional: {
+		FullUrl: <string>,
+		Path: <string>,
+	}
+}
